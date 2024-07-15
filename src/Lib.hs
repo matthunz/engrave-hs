@@ -76,7 +76,14 @@ parse source = do
 
 data Point = Point {_row :: Word32, _col :: Word32} deriving (Show)
 
-data TokenKind = IntToken | OpToken | ParenToken | StringToken deriving (Show)
+data TokenKind
+  = BracketToken
+  | DelimToken
+  | IntToken
+  | OpToken
+  | ParenToken
+  | StringToken
+  deriving (Show)
 
 data Token = Token TokenKind Point Point deriving (Show)
 
@@ -113,15 +120,27 @@ query s tree = do
             kind <- ts_node_string_p ts_node >>= peekCString
             let (TSNode _ point _ _ _) = captureTSNode capture
                 tokenKind = case kind of
+                  "(\",\")" -> DelimToken
                   "(integer)" -> IntToken
                   "(string)" -> StringToken
                   "(operator)" -> OpToken
+                  "(all_names)" -> OpToken
+                  "(wildcard)" -> OpToken
+                  "(constructor_operator)" -> OpToken
                   "(\".\")" -> OpToken
+                  "(\"..\")" -> OpToken
                   "(\"::\")" -> OpToken
                   "(\"=\")" -> OpToken
                   "(\"<-\")" -> OpToken
-                  "(\"(\")"-> ParenToken
-                  "(\")\")"  -> ParenToken
+                  "(\"->\")" -> OpToken
+                  "(\"|\")" -> OpToken
+                  "(\"\\\")" -> OpToken -- TODO
+                  "(\"(\")" -> ParenToken
+                  "(\")\")" -> ParenToken
+                  "(\"{\")" -> BracketToken
+                  "(\"}\")" -> BracketToken
+                  "(\"[\")" -> BracketToken -- TODO
+                  "(\"]\")" -> BracketToken -- TODO
                   _ -> error ("TODO: " ++ kind)
             next <- f
             return $
@@ -168,9 +187,11 @@ printHighlights =
           ( \(Highlight s t) -> do
               case t of
                 Just t' -> case t' of
+                  DelimToken -> setSGR [SetColor Foreground Vivid Black]
                   IntToken -> setSGR [SetColor Foreground Vivid Blue]
                   StringToken -> setSGR [SetColor Foreground Vivid Yellow]
                   OpToken -> setSGR [SetColor Foreground Vivid Red]
+                  BracketToken -> setSGR [SetColor Foreground Vivid Green]
                   ParenToken -> setSGR [SetColor Foreground Vivid Green]
                 Nothing -> pure ()
               putStr s
