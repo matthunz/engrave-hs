@@ -53,13 +53,17 @@ data Tree = Tree
     _ptr :: ForeignPtr TreeSitter.Tree.Tree
   }
 
-parse :: String -> IO Tree
-parse source = do
+parse :: String -> Maybe Tree -> IO Tree
+parse source tree = do
   (str, len) <- newCStringLen source
 
   parser <- ts_parser_new
   _ <- ts_parser_set_language parser tree_sitter_haskell
-  treePtr <- ts_parser_parse_string parser nullPtr str len
+  
+  treePtr <- case tree of
+    Just (Tree _ ptr) -> withForeignPtr ptr $ \ptr' -> ts_parser_parse_string parser ptr' str len
+    Nothing -> ts_parser_parse_string parser nullPtr str len
+
   free parser
   free str
 
