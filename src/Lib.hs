@@ -155,10 +155,10 @@ query s tree = do
 data Highlight = Highlight String (Maybe TokenKind) deriving (Show)
 
 highlight :: [String] -> [Token] -> [[Highlight]]
-highlight buf tokens = zipWith (\idx row -> highlight' row idx tokens) [0 ..] buf
+highlight buf tokens = zipWith (\idx row -> highlight' row idx 0 tokens) [0 ..] buf
 
-highlight' :: String -> Word32 -> [Token] -> [Highlight]
-highlight' s row ((Token t start end) : ts) =
+highlight' :: String -> Word32 -> Int -> [Token] -> [Highlight]
+highlight' s row col ((Token t start end) : ts) =
   if row >= _row start && row <= _row end
     then
       let (x, len) =
@@ -168,16 +168,16 @@ highlight' s row ((Token t start end) : ts) =
                       if _row end == row
                         then fromIntegral (_col end - _col start)
                         else length s
-                 in (fromIntegral (_col start), l)
+                 in (fromIntegral (_col start) - col, l)
               else
                 if _row end == row
-                  then (0, fromIntegral $ _col end)
+                  then (0, fromIntegral (_col end) - col)
                   else (0, length s)
-          hs = highlight' (take x s) row ts ++ [Highlight (take len (drop x s)) (Just t)]
+          hs = highlight' (take x s) row col ts ++ [Highlight (take len (drop x s)) (Just t)]
           trailing = drop (x + len) s
-       in if null trailing then hs else hs ++ highlight' trailing row ts
-    else highlight' s row ts
-highlight' s _ [] = [Highlight s Nothing]
+       in if null trailing then hs else hs ++ highlight' trailing row (col + x + len) ts
+    else highlight' s row col ts
+highlight' s _ _ [] = [Highlight s Nothing]
 
 printHighlights :: [[Highlight]] -> IO ()
 printHighlights =
