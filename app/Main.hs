@@ -3,4 +3,7 @@ module Main (main) where
 import Lib
 
 main :: IO ()
-main = someFunc
+main = do
+  tree <- parse "main = putStrLn \"Hello, World!\""
+  print "Hello, World!"
+

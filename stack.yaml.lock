@@ -3,7 +3,33 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    commit: b2b32e22701622db5096ec147512c82e66ce7ab4
+    git: https://github.com/matthunz/haskell-tree-sitter.git
+    name: tree-sitter
+    pantry-tree:
+      sha256: 6afe5a5ade0d60fb21b86f7c2d000174e3a690e3e90d32f5c75d6c70f86ae91d
+      size: 41145
+    subdir: tree-sitter
+    version: 0.9.0.3
+  original:
+    commit: b2b32e22701622db5096ec147512c82e66ce7ab4
+    git: https://github.com/matthunz/haskell-tree-sitter.git
+    subdir: tree-sitter
+- completed:
+    commit: b2b32e22701622db5096ec147512c82e66ce7ab4
+    git: https://github.com/matthunz/haskell-tree-sitter.git
+    name: tree-sitter-haskell
+    pantry-tree:
+      sha256: f6a8959dba6ad4be33c7bd54d533e8a8fb8a6bccb8865aa54d26dbdc3001a422
+      size: 8815
+    subdir: tree-sitter-haskell
+    version: 0.3.0.2
+  original:
+    commit: b2b32e22701622db5096ec147512c82e66ce7ab4
+    git: https://github.com/matthunz/haskell-tree-sitter.git
+    subdir: tree-sitter-haskell
 snapshots:
 - completed:
     sha256: 98fe98dae6f42f9b4405e5467f62f57df2896c57b742a09772688c900c722510
