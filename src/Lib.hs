@@ -8,6 +8,7 @@ module Lib
     Highlight,
     highlight,
     highlight',
+    printHighlights,
   )
 where
 
@@ -21,6 +22,7 @@ import Foreign.Storable
   ( peek,
     poke,
   )
+import System.Console.ANSI
 import TreeSitter.Haskell (tree_sitter_haskell)
 import TreeSitter.Node
   ( Node (nodeEndPoint),
@@ -74,7 +76,7 @@ parse source = do
 
 data Point = Point {_row :: Word32, _col :: Word32} deriving (Show)
 
-data TokenKind = IntToken deriving (Show)
+data TokenKind = IntToken | OpToken | ParenToken | StringToken deriving (Show)
 
 data Token = Token TokenKind Point Point deriving (Show)
 
@@ -112,7 +114,15 @@ query s tree = do
             let (TSNode _ point _ _ _) = captureTSNode capture
                 tokenKind = case kind of
                   "(integer)" -> IntToken
-                  _ -> error "TODO"
+                  "(string)" -> StringToken
+                  "(operator)" -> OpToken
+                  "(\".\")" -> OpToken
+                  "(\"::\")" -> OpToken
+                  "(\"=\")" -> OpToken
+                  "(\"<-\")" -> OpToken
+                  "(\"(\")"-> ParenToken
+                  "(\")\")"  -> ParenToken
+                  _ -> error ("TODO: " ++ kind)
             next <- f
             return $
               Token
@@ -125,8 +135,8 @@ query s tree = do
 
 data Highlight = Highlight String (Maybe TokenKind) deriving (Show)
 
-highlight :: [String] -> [Token] -> [Highlight]
-highlight buf tokens = concatMap (\(idx, row) -> highlight' row idx tokens) (zip [0 ..] buf)
+highlight :: [String] -> [Token] -> [[Highlight]]
+highlight buf tokens = zipWith (\idx row -> highlight' row idx tokens) [0 ..] buf
 
 highlight' :: String -> Word32 -> [Token] -> [Highlight]
 highlight' s row ((Token t start end) : ts) =
@@ -149,3 +159,23 @@ highlight' s row ((Token t start end) : ts) =
        in if null trailing then hs else hs ++ highlight' trailing row ts
     else highlight' s row ts
 highlight' s _ [] = [Highlight s Nothing]
+
+printHighlights :: [[Highlight]] -> IO ()
+printHighlights =
+  mapM_
+    ( \row -> do
+        mapM_
+          ( \(Highlight s t) -> do
+              case t of
+                Just t' -> case t' of
+                  IntToken -> setSGR [SetColor Foreground Vivid Blue]
+                  StringToken -> setSGR [SetColor Foreground Vivid Yellow]
+                  OpToken -> setSGR [SetColor Foreground Vivid Red]
+                  ParenToken -> setSGR [SetColor Foreground Vivid Green]
+                Nothing -> pure ()
+              putStr s
+              setSGR [Reset]
+          )
+          row
+        putStrLn ""
+    )

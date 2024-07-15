@@ -9,9 +9,9 @@ import Lib
 
 main :: IO ()
 main = do
-  let src = "main = print 42"
+  src <- readFile "app/Main.hs"
   tree <- parse src
   tokens  <- query $(embedStringFile "queries/haskell.scm") tree
   print tokens
 
-  print $ highlight (lines src) tokens
+  printHighlights $ highlight (lines src) tokens
