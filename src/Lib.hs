@@ -5,16 +5,18 @@ module Lib
     TokenKind (..),
     Token,
     query,
+    Highlight,
+    highlight,
+    highlight',
   )
 where
 
 import Data.Word (Word32)
-import Foreign (ForeignPtr, FunPtr, free, withForeignPtr)
-import Foreign.C (CInt)
+import Foreign (ForeignPtr, free, withForeignPtr)
 import Foreign.C.String (newCStringLen, peekCString)
 import Foreign.Concurrent (newForeignPtr)
 import Foreign.Marshal.Alloc (malloc)
-import Foreign.Ptr (Ptr, nullPtr)
+import Foreign.Ptr (nullPtr)
 import Foreign.Storable
   ( peek,
     poke,
@@ -76,7 +78,7 @@ data TokenKind = IntToken deriving (Show)
 
 data Token = Token TokenKind Point Point deriving (Show)
 
-query ::String-> Tree -> IO [Token]
+query :: String -> Tree -> IO [Token]
 query s tree = do
   (queryStr, queryStrLen) <- newCStringLen s
   errorOffset <- malloc
@@ -120,3 +122,30 @@ query s tree = do
                 : next
           else pure []
   f
+
+data Highlight = Highlight String (Maybe TokenKind) deriving (Show)
+
+highlight :: [String] -> [Token] -> [Highlight]
+highlight buf tokens = concatMap (\(idx, row) -> highlight' row idx tokens) (zip [0 ..] buf)
+
+highlight' :: String -> Word32 -> [Token] -> [Highlight]
+highlight' s row ((Token t start end) : ts) =
+  if row >= _row start && row <= _row end
+    then
+      let (x, len) =
+            if _row start == row
+              then
+                let l =
+                      if _row end == row
+                        then fromIntegral (_col end - _col start)
+                        else length s
+                 in (fromIntegral (_col start), l)
+              else
+                if _row end == row
+                  then (0, fromIntegral $ _col end)
+                  else (0, length s)
+          hs = highlight' (take x s) row ts ++ [Highlight (take len (drop x s)) (Just t)]
+          trailing = drop (x + len) s
+       in if null trailing then hs else hs ++ highlight' trailing row ts
+    else highlight' s row ts
+highlight' s _ [] = [Highlight s Nothing]

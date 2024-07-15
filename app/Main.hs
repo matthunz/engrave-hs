@@ -4,6 +4,9 @@ import Lib
 
 main :: IO ()
 main = do
-  tree <- parse "main = print 42"
+  let src = "main = print 42"
+  tree <- parse src
   tokens  <- query "(integer) @constant.numeric.integer" tree
   print tokens
+
+  print $ highlight (lines src) tokens
