@@ -1,4 +1,4 @@
-module Lib
+module Engrave.Syntax
   ( Tree,
     parse,
     Point,
@@ -13,6 +13,7 @@ module Lib
 where
 
 import Data.Word (Word32)
+import Engrave (Point (..))
 import Foreign (ForeignPtr, free, withForeignPtr)
 import Foreign.C.String (newCStringLen, peekCString)
 import Foreign.Concurrent (newForeignPtr)
@@ -73,8 +74,6 @@ parse source = do
       { _root = root,
         _ptr = ptr
       }
-
-data Point = Point {_row :: Word32, _col :: Word32} deriving (Show)
 
 data TokenKind
   = BracketToken
