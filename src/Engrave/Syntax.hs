@@ -8,10 +8,13 @@ module Engrave.Syntax
     Highlight,
     highlight,
     highlight',
+    defaultColors,
     printHighlights,
   )
 where
 
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.Word (Word32)
 import Engrave (Point (..))
 import Foreign (ForeignPtr, free, withForeignPtr)
@@ -24,6 +27,7 @@ import Foreign.Storable
     poke,
   )
 import System.Console.ANSI
+import System.Console.ANSI (Color (Yellow))
 import TreeSitter.Haskell (tree_sitter_haskell)
 import TreeSitter.Node
   ( Node (nodeEndPoint),
@@ -59,7 +63,7 @@ parse source tree = do
 
   parser <- ts_parser_new
   _ <- ts_parser_set_language parser tree_sitter_haskell
-  
+
   treePtr <- case tree of
     Just (Tree _ ptr) -> withForeignPtr ptr $ \ptr' -> ts_parser_parse_string parser ptr' str len
     Nothing -> ts_parser_parse_string parser nullPtr str len
@@ -86,7 +90,7 @@ data TokenKind
   | OpToken
   | ParenToken
   | StringToken
-  deriving (Show)
+  deriving (Eq, Ord, Show)
 
 data Token = Token TokenKind Point Point deriving (Show)
 
@@ -182,20 +186,26 @@ highlight' s row col ((Token t start end) : ts) =
     else highlight' s row col ts
 highlight' s _ _ [] = [Highlight s Nothing]
 
-printHighlights :: [[Highlight]] -> IO ()
-printHighlights =
+defaultColors :: Map TokenKind Color
+defaultColors =
+  Map.fromList
+    [ (BracketToken, Red),
+      (DelimToken, Yellow),
+      (IntToken, Blue),
+      (StringToken, Yellow),
+      (OpToken, Red),
+      (BracketToken, Red),
+      (ParenToken, Red)
+    ]
+
+printHighlights :: Map TokenKind Color -> [[Highlight]] -> IO ()
+printHighlights colors =
   mapM_
     ( \row -> do
         mapM_
           ( \(Highlight s t) -> do
-              case t of
-                Just t' -> case t' of
-                  DelimToken -> setSGR [SetColor Foreground Vivid Black]
-                  IntToken -> setSGR [SetColor Foreground Vivid Blue]
-                  StringToken -> setSGR [SetColor Foreground Vivid Yellow]
-                  OpToken -> setSGR [SetColor Foreground Vivid Red]
-                  BracketToken -> setSGR [SetColor Foreground Vivid Green]
-                  ParenToken -> setSGR [SetColor Foreground Vivid Green]
+              case t >>= (`Map.lookup` colors) of
+                Just c -> setSGR [SetColor Foreground Vivid c]
                 Nothing -> pure ()
               putStr s
               setSGR [Reset]

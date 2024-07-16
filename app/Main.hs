@@ -10,4 +10,4 @@ main = do
   src <- readFile "app/Main.hs"
   tree <- parse src Nothing
   tokens <- query $(embedStringFile "queries/haskell.scm") tree
-  printHighlights $ highlight (lines src) tokens
+  printHighlights defaultColors (highlight (lines src) tokens) 

@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           engrave
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/engrave#readme>
+description:    Please see the README on GitHub at <https://github.com/matthunz/engrave#readme>
 homepage:       https://github.com/matthunz/engrave#readme
 bug-reports:    https://github.com/matthunz/engrave/issues
 author:         Matt Hunzinger
@@ -35,6 +35,7 @@ library
   build-depends:
       ansi-terminal
     , base >=4.7 && <5
+    , containers
     , file-embed
     , tree-sitter
     , tree-sitter-haskell
@@ -50,6 +51,7 @@ executable engrave-exe
   build-depends:
       ansi-terminal
     , base >=4.7 && <5
+    , containers
     , engrave
     , file-embed
     , tree-sitter
@@ -67,6 +69,7 @@ test-suite engrave-test
   build-depends:
       ansi-terminal
     , base >=4.7 && <5
+    , containers
     , engrave
     , file-embed
     , tree-sitter
