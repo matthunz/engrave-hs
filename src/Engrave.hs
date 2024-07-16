@@ -15,17 +15,18 @@ data Buffer = Buffer
   }
 
 data Editor = Editor
-  { _buffers :: [Buffer]
+  { _buffers :: [Buffer],
+    _colors :: Map TokenKind (ColorIntensity, Color)
   }
 
 mkEditor :: Editor
-mkEditor = Editor []
+mkEditor = Editor [] defaultColors
 
 addBuffer :: String -> Editor -> IO Editor
 addBuffer src editor = do
   tree <- parse src Nothing
   tokens <- query $(embedStringFile "queries/haskell.scm") tree
-  printLines defaultColors (highlight (lines src) tokens)
+  printLines (_colors editor) (highlight (lines src) tokens)
   return editor {_buffers = Buffer {_lines = [], _syntax = tree} : _buffers editor}
 
 printLines :: Map TokenKind (ColorIntensity, Color) -> [[Highlight]] -> IO ()
