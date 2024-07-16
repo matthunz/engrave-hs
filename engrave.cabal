@@ -27,6 +27,7 @@ library
   exposed-modules:
       Engrave
       Engrave.Core
+      Engrave.Server
       Engrave.Syntax
   other-modules:
       Paths_engrave
@@ -34,10 +35,16 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      ansi-terminal
+      aeson
+    , ansi-terminal
     , base >=4.7 && <5
+    , conduit
+    , conduit-extra
     , containers
     , file-embed
+    , json-rpc
+    , monad-logger
+    , text
     , tree-sitter
     , tree-sitter-haskell
   default-language: Haskell2010
@@ -50,11 +57,17 @@ executable engrave-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      ansi-terminal
+      aeson
+    , ansi-terminal
     , base >=4.7 && <5
+    , conduit
+    , conduit-extra
     , containers
     , engrave
     , file-embed
+    , json-rpc
+    , monad-logger
+    , text
     , tree-sitter
     , tree-sitter-haskell
   default-language: Haskell2010
@@ -68,11 +81,17 @@ test-suite engrave-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      ansi-terminal
+      aeson
+    , ansi-terminal
     , base >=4.7 && <5
+    , conduit
+    , conduit-extra
     , containers
     , engrave
     , file-embed
+    , json-rpc
+    , monad-logger
+    , text
     , tree-sitter
     , tree-sitter-haskell
   default-language: Haskell2010

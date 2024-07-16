@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Engrave
+import Engrave.Server
 
 main :: IO ()
 main = run

@@ -20,6 +20,12 @@ dependencies:
 - file-embed
 - tree-sitter
 - tree-sitter-haskell
+- conduit
+- conduit-extra
+- json-rpc
+- aeson
+- text
+- monad-logger
 
 ghc-options:
 - -Wall
