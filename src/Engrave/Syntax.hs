@@ -16,7 +16,7 @@ where
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Word (Word32)
-import Engrave (Point (..))
+import Engrave.Core (Point (..))
 import Foreign (ForeignPtr, free, withForeignPtr)
 import Foreign.C.String (newCStringLen, peekCString)
 import Foreign.Concurrent (newForeignPtr)
@@ -27,7 +27,6 @@ import Foreign.Storable
     poke,
   )
 import System.Console.ANSI
-import System.Console.ANSI (Color (Yellow))
 import TreeSitter.Haskell (tree_sitter_haskell)
 import TreeSitter.Node
   ( Node (nodeEndPoint),

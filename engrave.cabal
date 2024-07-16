@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Engrave
+      Engrave.Core
       Engrave.Syntax
   other-modules:
       Paths_engrave
