@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Engrave (Buffer, Editor, mkEditor, addBuffer, run) where
@@ -6,8 +7,9 @@ import Data.FileEmbed (embedStringFile)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Engrave.Syntax
-import System.Console.ANSI (setSGR, useAlternateScreenBuffer, useNormalScreenBuffer)
+import System.Console.ANSI (clearLine, setCursorColumn, setSGR, useAlternateScreenBuffer, useNormalScreenBuffer, setCursorPosition)
 import System.Console.ANSI.Codes
+import System.IO (hFlush, stdout)
 
 data Buffer = Buffer
   { _lines :: [String],
@@ -25,36 +27,56 @@ mkEditor = Editor [] defaultColors
 addBuffer :: String -> Editor -> IO Editor
 addBuffer src editor = do
   tree <- parse src Nothing
-  tokens <- query $(embedStringFile "queries/haskell.scm") tree
-  printLines (_colors editor) (highlight (lines src) tokens)
+  edits <- highlightBuf src (_colors editor) tree
+  drawEdits edits
+
   return editor {_buffers = Buffer {_lines = [], _syntax = tree} : _buffers editor}
 
-printLines :: Map TokenKind (ColorIntensity, Color) -> [[Highlight]] -> IO ()
-printLines colors highlights =
-  mapM_
-    ( \(row, i) -> do
-        setSGR [SetColor Background Dull Black]
-        let iStr = show i
-        putStr $ replicate (4 - length iStr) ' ' ++ iStr ++ " "
-        setSGR [Reset]
+highlightBuf :: String -> Map TokenKind (ColorIntensity, Color) -> Tree -> IO [BufferEdit]
+highlightBuf src colors tree = do
+  tokens <- query $(embedStringFile "queries/haskell.scm") tree
+  let highlights = highlight (lines src) tokens
+      edits = diff [] highlights 0
+  return $
+    map
+      ( \case
+          Insert i hs ->
+            InsertBuf
+              i
+              ( concatMap
+                  ( \(Highlight s t) ->
+                      case t >>= (`Map.lookup` colors) of
+                        Just (ci, c) -> setSGRCode [SetColor Foreground ci c]
+                        Nothing -> ""
+                        ++ s
+                        ++ setSGRCode [Reset]
+                  )
+                  hs
+              )
+          Replace i hs -> error ""
+          Remove i -> RemoveBuf i
+      )
+      edits
 
-        mapM_
-          ( \(Highlight s t) -> do
-              case t >>= (`Map.lookup` colors) of
-                Just (ci, c) -> setSGR [SetColor Foreground ci c]
-                Nothing -> pure ()
-              putStr s
-              setSGR [Reset]
-          )
-          row
-        putStrLn ""
-    )
-    (zip highlights [(0 :: Int) ..])
+data BufferEdit = InsertBuf Int String | RemoveBuf Int deriving (Eq, Show)
+
+drawEdits :: [BufferEdit] -> IO ()
+drawEdits edits = do
+  mapM_ drawEdit edits
+  hFlush stdout
+
+drawEdit :: BufferEdit -> IO ()
+drawEdit (InsertBuf i s) = do
+  setCursorPosition i 0
+  putStr s
+drawEdit (RemoveBuf i) = do
+  setCursorPosition i 0
+  clearLine
 
 run :: IO ()
 run = do
   useAlternateScreenBuffer
-  src <- readFile "src/Engrave.hs"
+  src <- readFile "app/Main.hs"
   editor <- addBuffer src mkEditor
   _ <- getChar
   useNormalScreenBuffer

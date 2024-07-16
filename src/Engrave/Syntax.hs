@@ -9,6 +9,8 @@ module Engrave.Syntax
     highlight,
     highlight',
     defaultColors,
+    Edit(..),
+    diff
   )
 where
 
@@ -167,7 +169,8 @@ query s tree = do
           else pure []
   f
 
-data Highlight = Highlight String (Maybe TokenKind) deriving (Show)
+data Highlight = Highlight String (Maybe TokenKind)
+  deriving (Eq, Show)
 
 highlight :: [String] -> [Token] -> [[Highlight]]
 highlight buf tokens = zipWith (\idx row -> highlight' row idx 0 tokens) [0 ..] buf
@@ -207,3 +210,11 @@ defaultColors =
       (ParenToken, (Vivid, Red)),
       (VarToken, (Dull, White))
     ]
+
+data Edit = Insert Int [Highlight] | Replace Int [Highlight] | Remove Int
+  deriving (Eq, Show)
+
+diff :: [[Highlight]] -> [[Highlight]] -> Int -> [Edit]
+diff (a : as) (b : bs) idx = diff as bs (idx + 1) ++ ([Replace idx a | a /= b])
+diff [] bs idx = zipWith (\i b -> Insert (idx + i) b) [0 ..] bs
+diff as [] idx = map (\i -> Remove (idx + i)) [0 .. length as - 1]
