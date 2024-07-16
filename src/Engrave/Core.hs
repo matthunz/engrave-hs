@@ -1,4 +1,4 @@
-module Engrave.Core where
+module Engrave.Core (Point(..)) where
 
 import Data.Word (Word32)
 

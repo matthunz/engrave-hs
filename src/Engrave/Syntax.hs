@@ -5,11 +5,10 @@ module Engrave.Syntax
     TokenKind (..),
     Token,
     query,
-    Highlight,
+    Highlight (..),
     highlight,
     highlight',
     defaultColors,
-    printHighlights,
   )
 where
 
@@ -101,8 +100,8 @@ query s tree = do
   cursorPtr <- ts_query_cursor_new
   queryPtr <- ts_query_new tree_sitter_haskell queryStr queryStrLen errorOffset errorType
 
+  -- TODO handle error
   e <- peek errorType
-  print e
 
   withForeignPtr (_root tree) $ \node -> do
     ts_query_cursor_exec_p cursorPtr queryPtr node
@@ -122,18 +121,20 @@ query s tree = do
             node_ptr <- malloc
             ts_node_poke_p ts_node node_ptr
             node <- peek node_ptr
-
+            
             kind <- ts_node_string_p ts_node >>= peekCString
             let (TSNode _ point _ _ _) = captureTSNode capture
                 tokenKind = case kind of
                   "(\",\")" -> DelimToken
                   "(integer)" -> IntToken
+                  "(char)" -> StringToken -- TODO
                   "(string)" -> StringToken
                   "(operator)" -> OpToken
                   "(all_names)" -> OpToken
                   "(wildcard)" -> OpToken
                   "(constructor_operator)" -> OpToken
                   "(\".\")" -> OpToken
+                  "(\"`\")" -> OpToken -- TODO
                   "(\"..\")" -> OpToken
                   "(\"::\")" -> OpToken
                   "(\"=\")" -> OpToken
@@ -196,19 +197,3 @@ defaultColors =
       (BracketToken, Red),
       (ParenToken, Red)
     ]
-
-printHighlights :: Map TokenKind Color -> [[Highlight]] -> IO ()
-printHighlights colors =
-  mapM_
-    ( \row -> do
-        mapM_
-          ( \(Highlight s t) -> do
-              case t >>= (`Map.lookup` colors) of
-                Just c -> setSGR [SetColor Foreground Vivid c]
-                Nothing -> pure ()
-              putStr s
-              setSGR [Reset]
-          )
-          row
-        putStrLn ""
-    )
