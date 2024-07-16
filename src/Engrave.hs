@@ -28,7 +28,7 @@ addBuffer src editor = do
   printLines defaultColors (highlight (lines src) tokens)
   return editor {_buffers = Buffer {_lines = [], _syntax = tree} : _buffers editor}
 
-printLines :: Map TokenKind Color -> [[Highlight]] -> IO ()
+printLines :: Map TokenKind (ColorIntensity, Color) -> [[Highlight]] -> IO ()
 printLines colors highlights =
   mapM_
     ( \(row, i) -> do
@@ -40,7 +40,7 @@ printLines colors highlights =
         mapM_
           ( \(Highlight s t) -> do
               case t >>= (`Map.lookup` colors) of
-                Just c -> setSGR [SetColor Foreground Vivid c]
+                Just (ci, c) -> setSGR [SetColor Foreground ci c]
                 Nothing -> pure ()
               putStr s
               setSGR [Reset]

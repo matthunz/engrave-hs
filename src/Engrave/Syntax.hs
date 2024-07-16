@@ -85,9 +85,11 @@ data TokenKind
   = BracketToken
   | DelimToken
   | IntToken
+  | KeywordToken
   | OpToken
   | ParenToken
   | StringToken
+  | VarToken
   deriving (Eq, Ord, Show)
 
 data Token = Token TokenKind Point Point deriving (Show)
@@ -121,10 +123,15 @@ query s tree = do
             node_ptr <- malloc
             ts_node_poke_p ts_node node_ptr
             node <- peek node_ptr
-            
+
             kind <- ts_node_string_p ts_node >>= peekCString
             let (TSNode _ point _ _ _) = captureTSNode capture
                 tokenKind = case kind of
+                  "(\"as\")" -> KeywordToken
+                  "(\"data\")" -> KeywordToken
+                  "(\"do\")" -> KeywordToken
+                  "(\"where\")" -> KeywordToken
+                  "(\"let\")" -> KeywordToken
                   "(\",\")" -> DelimToken
                   "(integer)" -> IntToken
                   "(char)" -> StringToken -- TODO
@@ -148,6 +155,7 @@ query s tree = do
                   "(\"}\")" -> BracketToken
                   "(\"[\")" -> BracketToken -- TODO
                   "(\"]\")" -> BracketToken -- TODO
+                  "(variable)" -> VarToken
                   _ -> error ("TODO: " ++ kind)
             next <- f
             return $
@@ -186,14 +194,16 @@ highlight' s row col ((Token t start end) : ts) =
     else highlight' s row col ts
 highlight' s _ _ [] = [Highlight s Nothing]
 
-defaultColors :: Map TokenKind Color
+defaultColors :: Map TokenKind (ColorIntensity, Color)
 defaultColors =
   Map.fromList
-    [ (BracketToken, Red),
-      (DelimToken, Yellow),
-      (IntToken, Blue),
-      (StringToken, Yellow),
-      (OpToken, Red),
-      (BracketToken, Red),
-      (ParenToken, Red)
+    [ (BracketToken, (Vivid, Red)),
+      (DelimToken, (Vivid, Yellow)),
+      (IntToken, (Vivid, Blue)),
+      (KeywordToken, (Vivid, Magenta)),
+      (StringToken, (Vivid, Yellow)),
+      (OpToken, (Vivid, Red)),
+      (BracketToken, (Vivid, Red)),
+      (ParenToken, (Vivid, Red)),
+      (VarToken, (Dull, White))
     ]
